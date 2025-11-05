@@ -91,20 +91,13 @@ colmap model_analyzer --path "$OUT_GLO/0" || true
 echo ""
 echo ">>> [4/5] Outlier removal (5x median distance threshold)"
 
-python3 ~/minimal_pose_filter.py \
+python3 ./minimal_pose_filter.py \
   --sparse_dir "$OUT_GLO/0" \
-  --database_path "$DB" \
   --out_dir "$OUTLIER_DIR" \
-  --method median_distance \
-  --median_distance_multiplier 5.0 \
   --apply model \
   --max_outlier_frac 0.2 \
   --force \
-  --plot advanced \
-  --json_report \
-  --images_dir "$IMG_DIR" \
-  --outliers_dir "$IMAGES_OUTLIERS" \
-  --no_move_images
+  --bin_output
 
 echo ""
 echo ">>> Organizing cleaned outputs..."
