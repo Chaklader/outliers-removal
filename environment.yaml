@@ -1,0 +1,19 @@
+name: outliers_removal
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - matplotlib
+  - pip
+  - colmap
+  - cudatoolkit=11.8
+  - pip:
+    - pycolmap
+    - nerfstudio
+    - torch>=2.0.0
+    - torchvision
+    - ninja
+    - gsplat>=0.1.0
+
