@@ -326,6 +326,7 @@ def main():
                 # 3) optionally convert cleaned TXT to BIN
                 if args.bin_output:
                     try:
+                        cleaned_bin_dir.mkdir(parents=True, exist_ok=True)
                         colmap_convert(cleaned_txt_dir, cleaned_bin_dir, "BIN")
                         model_written_path = str(cleaned_bin_dir)
                         path_notes.append("Converted cleaned TXT to BIN.")

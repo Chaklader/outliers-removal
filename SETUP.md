@@ -252,3 +252,19 @@ For issues with:
 - **GLoMAP**: https://github.com/colmap/glomap/issues
 - **COLMAP**: https://github.com/colmap/colmap/issues
 - **Nerfstudio**: https://github.com/nerfstudio-project/nerfstudio/issues
+
+
+
+
+cd ~/Projects/outliers-removal
+
+# Clean previous outputs
+rm -f database.db database_clean.db training.log
+rm -rf colmap/ colmap_clean/ outlier_filter/ images_outliers/
+
+# Run pipeline (it will handle cleanup too)
+conda activate outliers_removal
+nohup ./pipeline.sh > training.log 2>&1 &
+
+# Monitor progress
+tail -f training.log
