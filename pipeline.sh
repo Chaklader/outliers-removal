@@ -87,7 +87,7 @@ echo ""
 echo ">>> Organizing cleaned outputs..."
 
 mkdir -p "$OUT_CLEAN/0"
-cp -r "$OUTLIER_DIR/sparse/0_cleaned"/* "$OUT_CLEAN/0/"
+cp -r "$OUTLIER_DIR/sparse/0_cleaned_bin"/* "$OUT_CLEAN/0/"
 
 echo ""
 echo ">>> Creating cleaned database..."
