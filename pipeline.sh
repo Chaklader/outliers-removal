@@ -89,26 +89,24 @@ echo ">>> Organizing cleaned outputs..."
 mkdir -p "$OUT_CLEAN/0"
 cp -r "$OUTLIER_DIR/sparse/0_cleaned_bin"/* "$OUT_CLEAN/0/"
 
-echo ""
-echo ">>> Creating cleaned database..."
+# echo ""
+# echo ">>> Creating cleaned database..."
 
-cp "$DB" "$DB_CLEAN"
-OUTLIER_IDS_CSV=$(cat "$OUTLIER_DIR/outliers_ids.txt" | tr '\n' ',' | sed 's/,$//')
+# colmap image_deleter \
+#   --input_path "$DB" \
+#   --output_path "$DB_CLEAN" \
+#   --image_ids_path "$OUTLIER_DIR/outliers_ids.txt"
 
-colmap image_deleter \
-  --database_path "$DB_CLEAN" \
-  --image_ids "$OUTLIER_IDS_CSV"
-
-echo ""
-echo ">>> Model statistics (after outlier removal):"
-colmap model_analyzer --path "$OUT_CLEAN/0" || true
+# echo ""
+# echo ">>> Model statistics (after outlier removal):"
+# colmap model_analyzer --path "$OUT_CLEAN/0" || true
 
 
-echo "=========================================="
-echo "Original Model:       $OUT_GLO/0"
-echo "Cleaned Model:        $OUT_CLEAN/0"
-echo "Outlier Info:         $OUTLIER_DIR/"
-echo "=========================================="
+# echo "=========================================="
+# echo "Original Model:       $OUT_GLO/0"
+# echo "Cleaned Model:        $OUT_CLEAN/0"
+# echo "Outlier Info:         $OUTLIER_DIR/"
+# echo "=========================================="
 
 echo ""
 echo ">>> [5/5] Training Gaussian Splatting with cleaned data"
