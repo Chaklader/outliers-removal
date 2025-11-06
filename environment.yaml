@@ -7,7 +7,6 @@ dependencies:
   - numpy
   - matplotlib
   - pip
-  - colmap
   - cudatoolkit=11.8
   - pip:
     - pycolmap
