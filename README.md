@@ -100,3 +100,10 @@ After running the pipeline, you'll get:
 - The script tries GPU first, falls back to CPU for COLMAP operations
 - Outlier removal uses 5x median distance threshold by default
 
+
+## Running the Pipeline
+
+conda activate outliers_removal
+nohup ./pipeline.sh > training.log 2>&1 &
+
+tail -f training.log
