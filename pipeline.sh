@@ -76,22 +76,24 @@ echo ">>> [4/5] Outlier removal (5x median distance threshold)"
 
 python3 ./minimal_pose_filter.py \
   --sparse_dir "$OUT_GLO/0" \
+  --database_path "$DB" \
   --out_dir "$OUTLIER_DIR" \
-  --apply manifest \
+  --method median_distance \
+  --median_distance_multiplier 5.0 \
+  --apply model \
   --max_outlier_frac 0.2 \
-  --force
+  --force \
+  --plot advanced \
+  --json_report \
+  --images_dir "$IMG_DIR" \
+  --outliers_dir "$IMAGES_OUTLIERS" \
+  --no_move_images
 
 echo ""
 echo ">>> Organizing cleaned outputs..."
 
-echo "[info] Creating cleaned COLMAP model..."
 mkdir -p "$OUT_CLEAN/0"
-
-colmap model_converter \
-  --input_path "$OUT_GLO/0" \
-  --output_path "$OUT_CLEAN/0" \
-  --output_type BIN \
-  --image_list_path "$OUTLIER_DIR/inliers.txt"
+cp -r "$OUTLIER_DIR/sparse/0_cleaned"/* "$OUT_CLEAN/0/"
 
 echo ""
 echo ">>> Creating cleaned database..."
@@ -105,7 +107,7 @@ colmap image_deleter \
 
 echo ""
 echo ">>> Model statistics (after outlier removal):"
-colmap model_analyzer --path "$OUT_CLEAN/0"
+colmap model_analyzer --path "$OUT_CLEAN/0" || true
 
 
 echo "=========================================="
