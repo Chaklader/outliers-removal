@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Prioritize system libraries over conda to avoid conflicts
-export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/local/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+# Prioritize conda libraries to match GLoMAP build environment
+export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 IMG_DIR="images"
 
