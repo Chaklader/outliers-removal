@@ -113,9 +113,9 @@ cp -r "$OUTLIER_DIR/sparse/0_cleaned_bin"/* "$OUT_CLEAN/0/"
 #   --output_path "$DB_CLEAN" \
 #   --image_ids_path "$OUTLIER_DIR/outliers_ids.txt"
 
-# echo ""
-# echo ">>> Model statistics (after outlier removal):"
-# colmap model_analyzer --path "$OUT_CLEAN/0" || true
+echo ""
+echo ">>> Model statistics (after outlier removal):"
+colmap model_analyzer --path "$OUT_CLEAN/0" || true
 
 
 # echo "=========================================="
