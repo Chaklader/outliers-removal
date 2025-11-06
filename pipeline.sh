@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Prioritize conda binaries and libraries
-export PATH=$CONDA_PREFIX/bin:$PATH
-export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
+# Prioritize system libraries for COLMAP to avoid glog conflicts
+export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/x86_64-linux-gnu:$CONDA_PREFIX/lib
 
 IMG_DIR="images"
 
