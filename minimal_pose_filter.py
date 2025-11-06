@@ -335,7 +335,7 @@ def main():
         except Exception as e:
             model_error = str(e)
 
-    # Print JSON summary to stdout
+    # Create JSON summary
     summary = {
         "summary": {
             "total_images": total,
@@ -359,6 +359,13 @@ def main():
             "No database edits performed.",
         ],
     }
+    
+    # Write JSON to file
+    report_path = out_dir / "report.json"
+    with open(report_path, "w") as f:
+        json.dump(summary, f, indent=2)
+    
+    # Also print to stdout for logging
     print(json.dumps(summary, indent=2))
 
     # Friendly console message
