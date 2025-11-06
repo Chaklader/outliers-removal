@@ -68,14 +68,30 @@ colmap mapper \
   --output_path "$OUT_GLO"
 
 echo ""
+echo ">>> Finding largest model..."
+LARGEST_MODEL=$(python3 -c "
+import os
+import sys
+sparse_dir = '$OUT_GLO'
+models = [d for d in os.listdir(sparse_dir) if os.path.isdir(os.path.join(sparse_dir, d))]
+if not models:
+    print('0')
+    sys.exit(0)
+largest = max(models, key=lambda m: os.path.getsize(os.path.join(sparse_dir, m, 'images.bin')) if os.path.exists(os.path.join(sparse_dir, m, 'images.bin')) else 0)
+print(largest)
+")
+
+echo "Using sparse model: $OUT_GLO/$LARGEST_MODEL"
+
+echo ""
 echo ">>> Model statistics (before outlier removal):"
-colmap model_analyzer --path "$OUT_GLO/0" || true
+colmap model_analyzer --path "$OUT_GLO/$LARGEST_MODEL" || true
 
 echo ""
 echo ">>> [4/5] Outlier removal (5x median distance threshold)"
 
 python3 ./minimal_pose_filter.py \
-  --sparse_dir "$OUT_GLO/0" \
+  --sparse_dir "$OUT_GLO/$LARGEST_MODEL" \
   --out_dir "$OUTLIER_DIR" \
   --apply model \
   --mult 5.0 \
@@ -125,7 +141,7 @@ ns-train splatfacto \
     --load-scheduler False \
     colmap \
     --data . \
-    --colmap-path $OUT_CLEAN/0 \
+    --colmap-path "$OUT_CLEAN/0" \
     --auto-scale-poses False \
     --downscale-factor 1
 
