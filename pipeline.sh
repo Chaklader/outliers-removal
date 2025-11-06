@@ -61,8 +61,8 @@ colmap sequential_matcher \
   --log_to_stderr 1 --log_level 2
 
 echo ""
-echo ">>> [3/5] GLoMAP mapper (Global SfM)"
-glomap mapper \
+echo ">>> [3/5] COLMAP mapper (Incremental SfM)"
+colmap mapper \
   --database_path "$DB" \
   --image_path "$IMG_DIR" \
   --output_path "$OUT_GLO"
