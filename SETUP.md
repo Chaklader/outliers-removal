@@ -21,12 +21,10 @@ sudo apt install -y \
   cmake \
   git \
   libboost-all-dev \
-  libeigen3-dev \
-  libgoogle-glog-dev \
-  libgoogle-glog0v6 \
-  libssl-dev \
-  libcrypto++-dev
+  libeigen3-dev
 ```
+
+**Note**: We only install minimal system dependencies. COLMAP, glog, OpenSSL, and other libraries will be managed through conda to ensure version consistency.
 
 ## Installation Steps
 
@@ -40,6 +38,8 @@ conda env create -f environment.yaml
 conda activate outliers_removal
 ```
 
+**Note**: The environment includes COLMAP, glog, and all necessary Python packages to ensure consistent library versions.
+
 ### 3. Install GLoMAP
 
 GLoMAP is a global Structure-from-Motion tool that provides faster and more robust reconstruction than traditional
@@ -48,37 +48,31 @@ incremental methods.
 #### Build from Source
 
 ```bash
-# 1. Install system dependencies for GLoMAP
-sudo apt install -y libgoogle-glog-dev libgoogle-glog0v6
-
-# 2. Activate conda environment and install OpenSSL
+# 1. Activate conda environment
 conda activate outliers_removal
-conda install -c conda-forge openssl=3.2.0 -y
 
-# 3. Clone GLoMAP repository
+# 2. Clone GLoMAP repository
 cd ~/Projects
 git clone https://github.com/colmap/glomap.git
 cd glomap
 
-# 4. Create and enter build directory
+# 3. Create and enter build directory
 mkdir build
 cd build
 
-# 5. Configure with CMake (using conda OpenSSL)
+# 4. Configure with CMake (using conda environment)
 cmake .. \
   -DCMAKE_CUDA_ARCHITECTURES=native \
-  -DOPENSSL_ROOT_DIR=$CONDA_PREFIX \
-  -DOPENSSL_INCLUDE_DIR=$CONDA_PREFIX/include \
-  -DOPENSSL_CRYPTO_LIBRARY=$CONDA_PREFIX/lib/libcrypto.so \
-  -DOPENSSL_SSL_LIBRARY=$CONDA_PREFIX/lib/libssl.so \
   -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
 
-# 6. Build (this will take 10-20 minutes)
+# 5. Build (this will take 10-20 minutes)
 make -j$(nproc)
 
-# 7. Install
+# 6. Install
 sudo make install
 ```
+
+**Important**: GLoMAP must be built with the conda environment activated to ensure it links against the correct library versions (glog, OpenSSL, etc.).
 
 #### Verify Installation
 
@@ -119,28 +113,33 @@ python -c "import nerfstudio; print('nerfstudio installed')"
 
 ### GLoMAP Build Issues
 
-**Problem**: OpenSSL linking errors during build
+**Problem**: CMake can't find glog or OpenSSL
 
 ```
-undefined reference to `X509_STORE_CTX_init_rpk@OPENSSL_3.2.0'
+cannot find -lglog::glog: No such file or directory
 ```
 
-**Solution**: Install system glog library
+**Solution**: Ensure conda environment is activated during build
 
 ```bash
-sudo apt install libgoogle-glog-dev libgoogle-glog0v6
+conda activate outliers_removal
+cd ~/Projects/glomap/build
+rm -rf *
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=native -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+make -j$(nproc)
+sudo make install
 ```
 
-**Problem**: Missing `libglog.so.2` at runtime
+**Problem**: Flag conflicts at runtime
 
 ```
-glomap: error while loading shared libraries: libglog.so.2
+ERROR: flag 'timestamp_in_logfile_name' was defined more than once
 ```
 
-**Solution**: Install system glog (same as above)
+**Solution**: Ensure the pipeline script sets library path correctly (already configured in `pipeline.sh` line 5)
 
 ```bash
-sudo apt install libgoogle-glog-dev libgoogle-glog0v6
+export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 ```
 
 ### COLMAP Issues
@@ -152,6 +151,7 @@ sudo apt install libgoogle-glog-dev libgoogle-glog0v6
 ```bash
 conda activate outliers_removal
 which colmap
+# Should show: ~/.conda/envs/outliers_removal/bin/colmap
 ```
 
 ### GPU Issues
@@ -163,6 +163,22 @@ which colmap
 ```bash
 nvidia-smi
 nvcc --version
+```
+
+**Problem**: CUDA architecture mismatch
+
+**Solution**: Rebuild GLoMAP with your GPU's architecture
+
+```bash
+# Find your GPU compute capability
+nvidia-smi --query-gpu=compute_cap --format=csv
+
+# Rebuild with specific architecture (e.g., 80 for A100, 86 for RTX 3090)
+cd ~/Projects/glomap/build
+rm -rf *
+cmake .. -DCMAKE_CUDA_ARCHITECTURES=86 -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+make -j$(nproc)
+sudo make install
 ```
 
 ## Directory Structure
@@ -199,10 +215,13 @@ See the main README for usage instructions.
 - **Python**: 3.10
 - **CUDA Toolkit**: 11.8
 - **PyTorch**: 2.0.0+
-- **COLMAP**: Installed via conda
-- **GLoMAP**: Built from source
+- **COLMAP**: Installed via conda-forge
+- **glog**: Installed via conda-forge (required for COLMAP and GLoMAP)
+- **GLoMAP**: Built from source (using conda libraries)
 - **Nerfstudio**: Latest version
 - **pycolmap**: For Python COLMAP bindings
+
+**Key Design Decision**: All dependencies (COLMAP, glog, Python packages) are managed through conda to ensure consistent library versions and avoid conflicts. GLoMAP is built from source but uses the conda environment's libraries.
 
 ## Useful Commands
 
