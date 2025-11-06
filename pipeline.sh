@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMG_DIR="jpgs_sequential"
+IMG_DIR="images"
 
-EXP_NAME="${EXP_NAME:-$(date +%Y%m%d_%H%M%S)}"
-DB="database_${EXP_NAME}.db"
-DB_CLEAN="database_${EXP_NAME}_clean.db"
-OUT_GLO="sparse_glomap_${EXP_NAME}"
-OUT_CLEAN="sparse_clean_${EXP_NAME}"
-OUTLIER_DIR="outlier_filter_${EXP_NAME}"
-IMAGES_OUTLIERS="images_outliers_${EXP_NAME}"
+EXP_NAME="outlier_removal"
+DB="database.db"
+DB_CLEAN="database_clean.db"
+OUT_GLO="colmap/sparse"
+OUT_CLEAN="colmap_clean/sparse"
+OUTLIER_DIR="outlier_filter"
+IMAGES_OUTLIERS="images_outliers"
 
 rm -f "$DB" "$DB_CLEAN"
 rm -rf "$OUT_GLO" "$OUT_CLEAN" "$OUTLIER_DIR" "$IMAGES_OUTLIERS"
@@ -44,19 +44,6 @@ colmap feature_extractor \
   --SiftExtraction.estimate_affine_shape 0 \
   --SiftExtraction.max_num_features 8192 \
   --SiftExtraction.peak_threshold 0.006 \
-  --log_to_stderr 1 --log_level 2 \
-|| colmap feature_extractor \
-  --database_path "$DB" \
-  --image_path "$IMG_DIR" \
-  --ImageReader.single_camera true \
-  --ImageReader.camera_model OPENCV \
-  --SiftExtraction.use_gpu 0 \
-  --SiftExtraction.max_image_size 1600 \
-  --SiftExtraction.first_octave -1 \
-  --SiftExtraction.domain_size_pooling false \
-  --SiftExtraction.estimate_affine_shape 0 \
-  --SiftExtraction.max_num_features 8192 \
-  --SiftExtraction.peak_threshold 0.006 \
   --log_to_stderr 1 --log_level 2
 
 echo ""
@@ -68,13 +55,6 @@ colmap sequential_matcher \
   --SiftMatching.guided_matching 1 \
   --SiftMatching.use_gpu 1 \
   --SiftMatching.gpu_index 0 \
-  --log_to_stderr 1 --log_level 2 \
-|| colmap sequential_matcher \
-  --database_path "$DB" \
-  --SequentialMatching.overlap 20 \
-  --SequentialMatching.loop_detection 0 \
-  --SiftMatching.guided_matching 1 \
-  --SiftMatching.use_gpu 0 \
   --log_to_stderr 1 --log_level 2
 
 echo ""
@@ -94,66 +74,35 @@ echo ">>> [4/5] Outlier removal (5x median distance threshold)"
 python3 ./minimal_pose_filter.py \
   --sparse_dir "$OUT_GLO/0" \
   --out_dir "$OUTLIER_DIR" \
-  --apply model \
+  --apply manifest \
   --max_outlier_frac 0.2 \
-  --force \
-  --bin_output
+  --force
 
 echo ""
 echo ">>> Organizing cleaned outputs..."
 
-OUTLIER_IDS_FILE="$OUTLIER_DIR/outliers_ids.txt"
-INLIER_FILE="$OUTLIER_DIR/inliers.txt"
-
-if [ -f "$OUTLIER_IDS_FILE" ]; then
-    NUM_OUTLIERS=$(wc -l < "$OUTLIER_IDS_FILE" || echo "0")
-    NUM_INLIERS=$(wc -l < "$INLIER_FILE" || echo "0") 
-    echo "[info] Outliers detected: $NUM_OUTLIERS"
-    echo "[info] Inliers remaining: $NUM_INLIERS"
-else
-    NUM_OUTLIERS=0
-    NUM_INLIERS=0
-    echo "[warn] No outliers file found"
-fi
-
+echo "[info] Creating cleaned COLMAP model..."
 mkdir -p "$OUT_CLEAN/0"
-if [ -d "$OUTLIER_DIR/sparse/0_cleaned" ]; then
-    echo "[info] Copying cleaned sparse model"
-    cp -r "$OUTLIER_DIR/sparse/0_cleaned"/* "$OUT_CLEAN/0/"
-else
-    echo "[warn] No cleaned model found, copying original"
-    cp -r "$OUT_GLO/0"/* "$OUT_CLEAN/0/"
-fi
+
+colmap model_converter \
+  --input_path "$OUT_GLO/0" \
+  --output_path "$OUT_CLEAN/0" \
+  --output_type BIN \
+  --image_list_path "$OUTLIER_DIR/inliers.txt"
 
 echo ""
 echo ">>> Creating cleaned database..."
-if [ -f "$DB" ]; then
-    cp "$DB" "$DB_CLEAN"
-    echo "[info] Copied database: $DB -> $DB_CLEAN"
-    
-    if [ -f "$OUTLIER_IDS_FILE" ] && [ $NUM_OUTLIERS -gt 0 ]; then
-        echo "[info] Removing $NUM_OUTLIERS outlier images from database..."
-        OUTLIER_IDS_CSV=$(cat "$OUTLIER_IDS_FILE" | tr '\n' ',' | sed 's/,$//')
-        
-        if [ -n "$OUTLIER_IDS_CSV" ]; then
-            colmap image_deleter \
-              --database_path "$DB_CLEAN" \
-              --image_ids "$OUTLIER_IDS_CSV" \
-            && echo "[info] ✓ Outliers removed from database" \
-            || echo "[warn] Failed to remove outliers from database"
-        fi
-    else
-        echo "[info] No outliers to remove from database"
-    fi
-else
-    echo "[warn] Original database not found: $DB"
-fi
 
-if [ -d "$OUT_CLEAN/0" ]; then
-    echo ""
-    echo ">>> Model statistics (after outlier removal):"
-    colmap model_analyzer --path "$OUT_CLEAN/0" || true
-fi
+cp "$DB" "$DB_CLEAN"
+OUTLIER_IDS_CSV=$(cat "$OUTLIER_DIR/outliers_ids.txt" | tr '\n' ',' | sed 's/,$//')
+
+colmap image_deleter \
+  --database_path "$DB_CLEAN" \
+  --image_ids "$OUTLIER_IDS_CSV"
+
+echo ""
+echo ">>> Model statistics (after outlier removal):"
+colmap model_analyzer --path "$OUT_CLEAN/0"
 
 
 echo "=========================================="
@@ -165,19 +114,16 @@ echo "=========================================="
 echo ""
 echo ">>> [5/5] Training Gaussian Splatting with cleaned data"
 
-vis="${VIEWER:-viewer+wandb}"
-proj_name="${PROJECT_NAME:-gaussian_splatting}"
-
 ns-train splatfacto \
     --machine.num-devices 1 \
-    --vis $vis \
+    --vis viewer+wandb \
     --viewer.quit-on-train-completion True \
     --log-gradients False \
     --pipeline.datamanager.images-on-gpu True \
     --pipeline.datamanager.train-cameras-sampling-strategy fps \
     --pipeline.model.use-bilateral-grid True \
-    --experiment-name $EXP_NAME \
-    --project-name $proj_name \
+    --experiment-name "my_experiment" \
+    --project-name "gaussian_splatting" \
     --use-grad-scaler False \
     --load-scheduler False \
     colmap \
