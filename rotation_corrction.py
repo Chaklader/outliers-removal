@@ -2,8 +2,11 @@ import numpy as np
 import open3d as o3d
 import json
 import os
-from pylogger import PyLogger
-log=PyLogger.getLogger("dcpipeline")
+import logging
+
+# Initialize logging
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+log = logging.getLogger(__name__)
 
 np.random.seed(42)
 o3d.utility.random.seed(42)
@@ -113,6 +116,9 @@ def get_rotation(ply_file_path, local_matrix_path='NeRF_matrix_4_4.json'):
         log.error("Placeholder matrix has been saved.")
 
 
-# if __name__ == "__main__":
-#      ply_file = "model_20990.ply"
-#      get_rotation(ply_file)
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) != 3:
+        print("Usage: python rotation_corrction.py <input_ply> <output_json>")
+        sys.exit(1)
+    get_rotation(sys.argv[1], sys.argv[2])

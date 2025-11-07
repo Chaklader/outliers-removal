@@ -7,14 +7,16 @@ import alphashape
 from scipy import spatial
 from sklearn.cluster import DBSCAN
 import open3d as o3d
+import logging
 
-from pylogger import PyLogger
-log=PyLogger.getLogger("dcpipeline")
+# Initialize logging
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+log = logging.getLogger(__name__)
 
 np.random.seed(42)
 
-rotation_file_path = 'matrix_4_4.json'
-ply_file_path = 'ply/model_25032.ply'
+rotation_file_path = './exports/NeRF_matrix_4_4.json'
+ply_file_path = './assets/NeRF.ply'
 
 
 def load_file(file_path: str) -> dict:
@@ -552,6 +554,7 @@ def generate_boundary_points_from_ply(ply_file_path, boundary_file, spacing_mete
 				json.dump(output_data, f, indent=2)
 			log.info(f"Saved {len(output_data)} boundary points to {boundary_file}")
 			return True
+
 		except Exception as e:
 			log.error(f"Error saving boundary file: {str(e)}")
 			return False
@@ -561,42 +564,19 @@ def generate_boundary_points_from_ply(ply_file_path, boundary_file, spacing_mete
 		return False
 
 
-# if __name__ == "__main__":
-# 	"""
-#     Boundary Generation for 3D Architectural Models
-
-#     This script processes PLY model points and generates boundary files for various 
-#     architectural structures including houses, apartments, greenhouses, and other buildings.
-
-#     The process includes:
-#     1. Loading PLY file data
-#     2. Applying rotation correction from matrix_4_4.json
-#     3. Filtering points using Open3D statistical outlier removal
-#     4. Generating alpha shape boundary with adaptive parameters
-#     5. Creating visualization and saving boundary coordinates
-
-#     Input:
-#     - PLY file: Contains 3D point cloud data of the building
-#     - matrix_4_4.json: Contains rotation matrix (created by rotation_correction.py)
-
-#     Output:
-#     - boundary.json: Contains the calculated boundary points in XZ plane
-#     - boundary.png: Visualization of original points, filtered points, and boundary
-
-#     Note: This script is designed to be fault-tolerant and will attempt multiple
-#     alpha values if boundary generation fails with the initial values.
-#     """
-
-# 	log.info(f"Processing PLY file: {ply_file_path}...")
-# 	try:
-# 		generate_boundary_points_from_ply(
-# 			ply_file_path,
-# 			boundary_file='boundary.json',
-# 			spacing_meters=0.2
-# 		)
-# 		log.info("✓ Processing completed")
-# 		log.info("Generated files:")
-# 		log.info("- boundary.json: Contains boundary coordinates")
-# 		log.info("- boundary.png: Visualization plot")
-# 	except Exception as e:
-# 		log.error(f"Error processing PLY file: {str(e)}")
+if __name__ == "__main__":
+	import sys
+	if len(sys.argv) != 4:
+		print("Usage: python boundary.py <ply_file> <rotation_matrix_json> <output_boundary_json>")
+		sys.exit(1)
+	
+	ply_path = sys.argv[1]
+	rotation_path = sys.argv[2]
+	boundary_path = sys.argv[3]
+	
+	generate_boundary_points_from_ply(
+		ply_path,
+		boundary_file=boundary_path,
+		spacing_meters=0.2,
+		rotation_file_path=rotation_path
+	)
