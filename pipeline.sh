@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Prioritize conda libraries for GLoMAP compatibility
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 IMG_DIR="images"
@@ -69,23 +68,13 @@ colmap mapper \
 
 echo ""
 echo ">>> Finding largest model..."
-LARGEST_MODEL=$(python3 -c "
-import os
-import sys
-sparse_dir = '$OUT_GLO'
-models = [d for d in os.listdir(sparse_dir) if os.path.isdir(os.path.join(sparse_dir, d))]
-if not models:
-    print('0')
-    sys.exit(0)
-largest = max(models, key=lambda m: os.path.getsize(os.path.join(sparse_dir, m, 'images.bin')) if os.path.exists(os.path.join(sparse_dir, m, 'images.bin')) else 0)
-print(largest)
-")
+LARGEST_MODEL=$(python3 ./find_largest_model.py "$OUT_GLO")
 
 echo "Using sparse model: $OUT_GLO/$LARGEST_MODEL"
 
 echo ""
 echo ">>> Model statistics (before outlier removal):"
-colmap model_analyzer --path "$OUT_GLO/$LARGEST_MODEL" || true
+colmap model_analyzer --path "$OUT_GLO/$LARGEST_MODEL" 2>&1 | tee model_statistics_before_cleaning.log || true
 
 echo ""
 echo ">>> [4/5] Outlier removal (5x median distance threshold)"
@@ -105,24 +94,11 @@ echo ">>> Organizing cleaned outputs..."
 mkdir -p "$OUT_CLEAN/0"
 cp -r "$OUTLIER_DIR/sparse/0_cleaned_bin"/* "$OUT_CLEAN/0/"
 
-# echo ""
-# echo ">>> Creating cleaned database..."
-
-# colmap image_deleter \
-#   --input_path "$DB" \
-#   --output_path "$DB_CLEAN" \
-#   --image_ids_path "$OUTLIER_DIR/outliers_ids.txt"
 
 echo ""
 echo ">>> Model statistics (after outlier removal):"
-colmap model_analyzer --path "$OUT_CLEAN/0" || true
+colmap model_analyzer --path "$OUT_CLEAN/0" 2>&1 | tee -a model_statistics_after_cleaning.log || true
 
-
-# echo "=========================================="
-# echo "Original Model:       $OUT_GLO/0"
-# echo "Cleaned Model:        $OUT_CLEAN/0"
-# echo "Outlier Info:         $OUTLIER_DIR/"
-# echo "=========================================="
 
 echo ""
 echo ">>> [5/5] Training Gaussian Splatting with cleaned data"
