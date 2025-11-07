@@ -5,8 +5,8 @@ echo "=========================================="
 echo "Stop Gaussian Splatting Training"
 echo "=========================================="
 
-# Find ns-train processes
-PIDS=$(pgrep -f "ns-train splatfacto" || true)
+# Find ns-train processes (match the actual command pattern)
+PIDS=$(ps aux | grep -E "bin/ns-train splatfacto" | grep -v grep | awk '{print $2}' || true)
 
 if [ -z "$PIDS" ]; then
     echo "❌ No training process found"
@@ -29,7 +29,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     sleep 2
     
     # Check if still running
-    STILL_RUNNING=$(pgrep -f "ns-train splatfacto" || true)
+    STILL_RUNNING=$(ps aux | grep -E "bin/ns-train splatfacto" | grep -v grep | awk '{print $2}' || true)
     if [ -n "$STILL_RUNNING" ]; then
         echo "Process still running, forcing kill..."
         kill -9 $STILL_RUNNING
