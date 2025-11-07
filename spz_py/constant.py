@@ -6,8 +6,8 @@ FLAG_ANTIALIASED = 0x1
 COLOR_SCALE = 0.15
 SH_C0 = 0.28209479177387814
 
-from pylogger import PyLogger
-log=PyLogger.getLogger("dcpipeline")
+import logging
+log = logging.getLogger(__name__)
 
 def degree_for_dim(dim: int) -> int:
     if dim < 3:

@@ -1,7 +1,7 @@
 import gzip
+import logging
 
-from pylogger import PyLogger
-log=PyLogger.getLogger("dcpipeline")
+log = logging.getLogger(__name__)
 
 def decompress_gzipped(data: bytes) -> bytes:
     try:

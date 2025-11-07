@@ -3,8 +3,8 @@ from .constant import dim_for_degree
 
 color_scale = 0.15
 
-from pylogger import PyLogger
-log=PyLogger.getLogger("dcpipeline")
+import logging
+log = logging.getLogger(__name__)
 
 def pack_gaussians(g: dict) -> dict:
     """

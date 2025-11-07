@@ -1,12 +1,14 @@
 import sys
 import os
 import argparse
-from pylogger import PyLogger
+import logging
 
 from spz_py.ply_loader import load_ply
 from spz_py.spz_serializer import serialize_spz
 
-log = PyLogger.getLogger("dcpipeline") # Initialize logger
+# Initialize logger
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
+log = logging.getLogger(__name__)
 
 def load_file(file_path: str) -> dict:
     # Ensure file exists before attempting to open

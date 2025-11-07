@@ -1,9 +1,9 @@
 import numpy as np
+import logging
 
 from .constant import degree_for_dim
 
-from pylogger import PyLogger
-log=PyLogger.getLogger("dcpipeline")
+log = logging.getLogger(__name__)
 
 def load_ply(stream) -> dict:
     """
