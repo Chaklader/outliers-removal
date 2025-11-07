@@ -96,14 +96,14 @@ def process_ply_file(ply_file_path):
         return None
 
 
-def save_matrix_to_json(matrix, filename='matrix_4_4.json'):
+def save_matrix_to_json(matrix, filename='NeRF_matrix_4_4.json'):
     matrix_data = {"matrix": matrix}
     with open(filename, 'w') as json_file:
         json.dump(matrix_data, json_file)
     log.info(f"Matrix has been saved to {filename}")
 
 
-def get_rotation(ply_file_path, local_matrix_path='matrix_4_4.json'):
+def get_rotation(ply_file_path, local_matrix_path='NeRF_matrix_4_4.json'):
     matrix = process_ply_file(ply_file_path)
     if matrix:
         save_matrix_to_json(matrix, local_matrix_path)
